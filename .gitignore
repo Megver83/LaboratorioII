@@ -1,0 +1,4 @@
+*.bak
+*.rej
+*.orig
+target/
