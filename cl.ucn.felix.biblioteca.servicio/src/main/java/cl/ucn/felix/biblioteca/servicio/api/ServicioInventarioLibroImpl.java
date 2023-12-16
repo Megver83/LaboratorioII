@@ -9,17 +9,23 @@ import cl.ucn.felix.biblioteca.api.ExcepcionLibroNoEncontrado;
 import cl.ucn.felix.biblioteca.api.Inventario;
 import cl.ucn.felix.biblioteca.api.Libro;
 
+// Nuevas importaciones
+import java.util.Map;
+import cl.ucn.felix.biblioteca.api.ExcepcionLibroExistente;
+import cl.ucn.felix.biblioteca.api.ExcepcionLibroInvalido;
+import cl.ucn.felix.biblioteca.api.Inventario.CriterioBusqueda;
+import cl.ucn.felix.biblioteca.api.LibroMutable;
+
 public class ServicioInventarioLibroImpl implements ServicioInventarioLibro{
 
 	private String sesion;
 	private BundleContext contexto;
-	
+
 	
 	public ServicioInventarioLibroImpl(BundleContext contexto) {
 		
 		this.contexto = contexto;
 	}
-
 		
 	@Override
 	public String login(String username, String password) throws ExcepcionCredencialInvalida {
@@ -53,28 +59,37 @@ public class ServicioInventarioLibroImpl implements ServicioInventarioLibro{
 	}
 
 	@Override
-	public Set<String> obtenerGrupos(String sesion)  {
-		// TODO Auto-generated method stub
-		return null;
-		
+	public Set<String> obtenerGrupos(String sesion) throws ExcepcionSesionNoValidaTiempoEjecucion  {
+		this.chequearSesion(sesion);
+		Inventario servicio = buscarLibroEnInventario();
+		return servicio.getCategorias();
 	}
 
 	@Override
-	public void adicionarLibro(String sesion, String isbn, String titulo, String autor, String categoria) {
-		// TODO Auto-generated method stub
-		
+	public void adicionarLibro(String sesion, String isbn, String titulo, String autor, String categoria) throws ExcepcionSesionNoValidaTiempoEjecucion, ExcepcionLibroExistente, ExcepcionLibroInvalido {
+		this.chequearSesion(sesion);
+		Inventario servicio = buscarLibroEnInventario();
+		LibroMutable libro = servicio.crearLibro(isbn);
+		libro.setAutor(autor);
+		libro.setTitulo(titulo);
+		libro.setCategoria(categoria);
+		servicio.guardarLibro(libro);
 	}
 
 	@Override
-	public void modificarCategoriaLibro(String sesion, String isbn, String categoria) {
-		// TODO Auto-generated method stub
-		
+	public void modificarCategoriaLibro(String sesion, String isbn, String categoria) throws ExcepcionSesionNoValidaTiempoEjecucion, ExcepcionLibroNoEncontrado, ExcepcionLibroInvalido {
+		this.chequearSesion(sesion);
+		Inventario inventario = buscarLibroEnInventario();
+		LibroMutable libro = inventario.cargarLibroParaEdicion(isbn);
+		libro.setCategoria(categoria);
+		inventario.guardarLibro(libro);
 	}
 
 	@Override
-	public void removerLibro(String sesion, String isbn) {
-		// TODO Auto-generated method stub
-		
+	public void removerLibro(String sesion, String isbn) throws ExcepcionSesionNoValidaTiempoEjecucion, ExcepcionLibroNoEncontrado {
+		this.chequearSesion(sesion);
+		Inventario inventario = buscarLibroEnInventario();
+		inventario.removerLibro(isbn);
 	}
 
 	@Override
@@ -86,21 +101,27 @@ public class ServicioInventarioLibroImpl implements ServicioInventarioLibro{
 	}
 
 	@Override
-	public Set<String> buscarLibrosPorCategoria(String sesion, String categoriaLike) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<String> buscarLibrosPorCategoria(String sesion, String categoriaLike) throws ExcepcionSesionNoValidaTiempoEjecucion {
+		this.chequearSesion(sesion);
+		Inventario inventario = buscarLibroEnInventario();
+		Map mapeo = Map.of(CriterioBusqueda.CATEGORIA_LIKE, categoriaLike);
+		return inventario.buscarLibros(mapeo);
 	}
 
 	@Override
-	public Set<String> buscarLibrosPorAutor(String session, String autorLike) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<String> buscarLibrosPorAutor(String session, String autorLike) throws ExcepcionSesionNoValidaTiempoEjecucion {
+		this.chequearSesion(sesion);
+		Inventario inventario = buscarLibroEnInventario();
+		Map mapeo = Map.of(CriterioBusqueda.AUTOR_LIKE, autorLike);
+		return inventario.buscarLibros(mapeo);
 	}
 
 	@Override
-	public Set<String> buscarLibrosPorTitulo(String sesion, String tituloLike) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<String> buscarLibrosPorTitulo(String sesion, String tituloLike) throws ExcepcionSesionNoValidaTiempoEjecucion {
+		this.chequearSesion(sesion);
+		Inventario inventario = buscarLibroEnInventario();
+		Map mapeo = Map.of(CriterioBusqueda.TITULO_LIKE, tituloLike);
+		return inventario.buscarLibros(mapeo);
 	}
 
 	private Inventario buscarLibroEnInventario() throws ExcepcionSesionNoValidaTiempoEjecucion {
